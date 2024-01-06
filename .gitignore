@@ -1,0 +1,6 @@
+.idea/
+/*.iml
+/cpu.prof
+/go1brc
+/go1brc.test
+/measurements*.txt
