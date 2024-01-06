@@ -138,23 +138,23 @@ func parseVal(data []byte) (int, int) {
 		i++
 	}
 
-	for val := int(data[i] - '0'); ; {
-		i++
+	val := int(data[i] - '0')
+	i++
 
-		if data[i] == '.' {
-			i++
-			val = val*10 + int(data[i]-'0')
-			i++
-
-			if neg {
-				return -val, i
-			}
-
-			return val, i
-		}
-
+	if data[i] != '.' {
 		val = val*10 + int(data[i]-'0')
+		i++
 	}
+
+	i++
+	val = val*10 + int(data[i]-'0')
+	i++
+
+	if neg {
+		return -val, i
+	}
+
+	return val, i
 }
 
 func output(outs []map[int]*station, print bool) {
