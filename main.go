@@ -71,11 +71,11 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 
 		in <- buf[off:end]
 
-		off = end
-
 		if end == fileSize {
 			break
 		}
+
+		off = end
 	}
 
 	close(in)
@@ -95,13 +95,20 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 }
 
 func parseLine(in <-chan []byte, stations map[int]*station) {
-	var key, keyLen, start, val int
+	var key, start, end, val int
 
 	for data := range in {
 		for i := 0; i < len(data); {
 			start = i
-			key, keyLen = parseCity(data[i:])
-			i += keyLen + 1
+			key = int(data[i])
+			i++
+
+			for ; data[i] != ';'; i++ {
+				key = 31*key + int(data[i])
+			}
+
+			end = i
+			i++
 
 			if data[i] == '-' {
 				if data[i+2] == '.' {
@@ -123,7 +130,7 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 
 			if stn == nil {
 				stations[key] = &station{
-					city:  string(data[start : start+keyLen]),
+					city:  string(data[start:end]),
 					count: 1,
 					sum:   val,
 					min:   val,
@@ -133,18 +140,6 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 				stn.add(val)
 			}
 		}
-	}
-}
-
-func parseCity(data []byte) (int, int) {
-	key := int(data[0])
-
-	for i := 1; ; i++ {
-		if data[i] == ';' {
-			return key, i
-		}
-
-		key = 31*key + int(data[i])
 	}
 }
 
