@@ -95,15 +95,35 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 }
 
 func parseLine(in <-chan []byte, stations map[int]*station) {
+	var key, keyLen, start, val int
+
 	for data := range in {
 		for i := 0; i < len(data); {
-			key, lenKey := parseCity(data[i:])
-			val, lenVal := parseVal(data[i+lenKey+1:])
+			start = i
+			key, keyLen = parseCity(data[i:])
+			i += keyLen + 1
+
+			if data[i] == '-' {
+				if data[i+2] == '.' {
+					val = -int(data[i+1]-'0')*10 + int(data[i+3]-'0')
+					i += 5
+				} else {
+					val = -int(data[i+1]-'0')*100 + int(data[i+2]-'0')*10 + int(data[i+4]-'0')
+					i += 6
+				}
+			} else if data[i+1] == '.' {
+				val = int(data[i]-'0')*10 + int(data[i+2]-'0')
+				i += 4
+			} else {
+				val = int(data[i]-'0')*100 + int(data[i+1]-'0')*10 + int(data[i+3]-'0')
+				i += 5
+			}
+
 			stn := stations[key]
 
 			if stn == nil {
 				stations[key] = &station{
-					city:  string(data[i : i+lenKey]),
+					city:  string(data[start : start+keyLen]),
 					count: 1,
 					sum:   val,
 					min:   val,
@@ -112,8 +132,6 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 			} else {
 				stn.add(val)
 			}
-
-			i += lenKey + lenVal + 2
 		}
 	}
 }
@@ -128,33 +146,6 @@ func parseCity(data []byte) (int, int) {
 
 		key = 31*key + int(data[i])
 	}
-}
-
-func parseVal(data []byte) (int, int) {
-	i := 0
-	neg := data[0] == '-'
-
-	if neg {
-		i++
-	}
-
-	val := int(data[i] - '0')
-	i++
-
-	if data[i] != '.' {
-		val = val*10 + int(data[i]-'0')
-		i++
-	}
-
-	i++
-	val = val*10 + int(data[i]-'0')
-	i++
-
-	if neg {
-		return -val, i
-	}
-
-	return val, i
 }
 
 func output(outs []map[int]*station, print bool) {
