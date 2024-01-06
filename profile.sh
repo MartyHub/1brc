@@ -1,8 +1,6 @@
 #!/usr/bin/env bash
 
-go build .
-
 export GOGC=off
 
-go test -cpuprofile cpu.prof -bench .
+go test -cpuprofile cpu.prof
 pprof -http=:8080 cpu.prof

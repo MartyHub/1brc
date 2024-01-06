@@ -10,15 +10,11 @@ import (
 	"time"
 )
 
-const workerSize int64 = 1024 * 1024 * 4
-
-var workers = runtime.NumCPU()
-
 func main() {
-	run(os.Args[1])
+	run(os.Args[1], true, runtime.NumCPU()*2, 1024*512)
 }
 
-func run(fileName string) {
+func run(fileName string, print bool, workers int, chunkSize int64) {
 	if fileName == "" {
 		fileName = "measurements_100_000_000.txt"
 	}
@@ -67,7 +63,7 @@ func run(fileName string) {
 	start := time.Now()
 
 	for off := int64(0); ; {
-		end := min(off+workerSize, fileSize)
+		end := min(off+chunkSize, fileSize)
 
 		for buf[end-1] != '\n' {
 			end--
@@ -87,13 +83,15 @@ func run(fileName string) {
 
 	computed := time.Now()
 
-	output(out)
+	output(out, print)
 
-	fmt.Printf("Computed in %v, printed in %v, done in %v\n",
-		computed.Sub(start),
-		time.Since(computed),
-		time.Since(start),
-	)
+	if print {
+		fmt.Printf("Computed in %v, printed in %v, done in %v\n",
+			computed.Sub(start),
+			time.Since(computed),
+			time.Since(start),
+		)
+	}
 }
 
 func parseLine(in <-chan []byte, stations map[int]*station) {
@@ -159,7 +157,7 @@ func parseVal(data []byte) (int, int) {
 	}
 }
 
-func output(outs []map[int]*station) {
+func output(outs []map[int]*station, print bool) {
 	stations := make(map[int]*station)
 
 	for _, out := range outs {
@@ -181,6 +179,10 @@ func output(outs []map[int]*station) {
 	}
 
 	slices.Sort(msgs)
+
+	if !print {
+		return
+	}
 
 	fmt.Print("{")
 
