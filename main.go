@@ -133,38 +133,30 @@ func parseCity(data []byte) (int, int) {
 }
 
 func parseVal(data []byte) (int, int) {
-	var (
-		i, val int
-	)
-
+	i := 0
 	neg := data[0] == '-'
 
 	if neg {
 		i++
 	}
 
-	for {
+	for val := int(data[i] - '0'); ; {
+		i++
+
 		if data[i] == '.' {
 			i++
 			val = val*10 + int(data[i]-'0')
 			i++
 
-			break
+			if neg {
+				return -val, i
+			}
+
+			return val, i
 		}
 
 		val = val*10 + int(data[i]-'0')
-		i++
-
-		if data[i] == '\n' {
-			break
-		}
 	}
-
-	if neg {
-		return -val, i
-	}
-
-	return val, i
 }
 
 func output(outs []map[int]*station) {
