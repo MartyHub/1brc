@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-go build .
-
 export GOGC=off
+
+go build -gcflags=-B .
 
 time ./go1brc "$1"
