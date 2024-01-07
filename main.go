@@ -97,7 +97,7 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 	output(out, print)
 
 	if print {
-		fmt.Printf("Computed in %v, collected in %v, total in %v\n",
+		_, _ = fmt.Fprintf(os.Stderr, "Computed in %v, collected in %v, total in %v\n",
 			computed.Sub(start),
 			time.Since(computed),
 			time.Since(start),
@@ -123,10 +123,10 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 
 			if data[i] == minus {
 				if data[i+2] == dot {
-					val = -int(data[i+1]-zero)*10 + int(data[i+3]-zero)
+					val = -(int(data[i+1]-zero)*10 + int(data[i+3]-zero))
 					i += 5
 				} else {
-					val = -int(data[i+1]-zero)*100 + int(data[i+2]-zero)*10 + int(data[i+4]-zero)
+					val = -(int(data[i+1]-zero)*100 + int(data[i+2]-zero)*10 + int(data[i+4]-zero))
 					i += 6
 				}
 			} else if data[i+1] == dot {
@@ -192,5 +192,4 @@ func output(outs []map[int]*station, print bool) {
 	}
 
 	fmt.Print("}\n")
-	fmt.Printf("%d stations\n", len(msgs))
 }
