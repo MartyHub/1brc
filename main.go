@@ -10,8 +10,19 @@ import (
 	"time"
 )
 
+const (
+	dot   = byte('.')
+	eol   = byte('\n')
+	minus = byte('-')
+	sep   = byte(';')
+	zero  = byte('0')
+
+	sizeChunk    = 1024 * 512
+	sizeStations = 512
+)
+
 func main() {
-	run(os.Args[1], true, runtime.NumCPU()*2, 1024*512)
+	run(os.Args[1], true, runtime.NumCPU()*2, sizeChunk)
 }
 
 func run(fileName string, print bool, workers int, chunkSize int64) {
@@ -51,7 +62,7 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 		idx := i
 
 		wg.Add(1)
-		out[idx] = make(map[int]*station, 512)
+		out[idx] = make(map[int]*station, sizeStations)
 
 		go func() {
 			defer wg.Done()
@@ -65,7 +76,7 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 	for off := int64(0); ; {
 		end := min(off+chunkSize, fileSize)
 
-		for buf[end-1] != '\n' {
+		for buf[end-1] != eol {
 			end--
 		}
 
@@ -86,7 +97,7 @@ func run(fileName string, print bool, workers int, chunkSize int64) {
 	output(out, print)
 
 	if print {
-		fmt.Printf("Computed in %v, printed in %v, done in %v\n",
+		fmt.Printf("Computed in %v, collected in %v, total in %v\n",
 			computed.Sub(start),
 			time.Since(computed),
 			time.Since(start),
@@ -103,26 +114,26 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 			key = int(data[i])
 			i++
 
-			for ; data[i] != ';'; i++ {
+			for ; data[i] != sep; i++ {
 				key = 31*key + int(data[i])
 			}
 
 			end = i
 			i++
 
-			if data[i] == '-' {
-				if data[i+2] == '.' {
-					val = -int(data[i+1]-'0')*10 + int(data[i+3]-'0')
+			if data[i] == minus {
+				if data[i+2] == dot {
+					val = -int(data[i+1]-zero)*10 + int(data[i+3]-zero)
 					i += 5
 				} else {
-					val = -int(data[i+1]-'0')*100 + int(data[i+2]-'0')*10 + int(data[i+4]-'0')
+					val = -int(data[i+1]-zero)*100 + int(data[i+2]-zero)*10 + int(data[i+4]-zero)
 					i += 6
 				}
-			} else if data[i+1] == '.' {
-				val = int(data[i]-'0')*10 + int(data[i+2]-'0')
+			} else if data[i+1] == dot {
+				val = int(data[i]-zero)*10 + int(data[i+2]-zero)
 				i += 4
 			} else {
-				val = int(data[i]-'0')*100 + int(data[i+1]-'0')*10 + int(data[i+3]-'0')
+				val = int(data[i]-zero)*100 + int(data[i+1]-zero)*10 + int(data[i+3]-zero)
 				i += 5
 			}
 
@@ -144,7 +155,7 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 }
 
 func output(outs []map[int]*station, print bool) {
-	stations := make(map[int]*station)
+	stations := make(map[int]*station, sizeStations)
 
 	for _, out := range outs {
 		for key, stn := range out {
