@@ -8,6 +8,7 @@ import (
 	"sync"
 	"syscall"
 	"time"
+	"unsafe"
 )
 
 const (
@@ -141,7 +142,7 @@ func parseLine(in <-chan []byte, stations map[int]*station) {
 
 			if stn == nil {
 				stations[key] = &station{
-					city:  string(data[start:end]),
+					city:  unsafe.String(unsafe.SliceData(data[start:]), end-start),
 					count: 1,
 					sum:   val,
 					min:   val,
