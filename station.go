@@ -3,10 +3,10 @@ package main
 import "fmt"
 
 type station struct {
-	city     string
 	count    int
 	sum      int
 	min, max int
+	city     []byte
 }
 
 func (stn *station) add(val int) {
@@ -28,9 +28,10 @@ func (stn *station) merge(other *station) {
 }
 
 func (stn *station) String() string {
-	return fmt.Sprintf("%s=%.1f/%.1f/%.1f", stn.city, round(stn.min), stn.avg(), round(stn.max))
-}
-
-func round(i int) float64 {
-	return float64(i) / 10.0
+	return fmt.Sprintf("%s=%.1f/%.1f/%.1f",
+		string(stn.city),
+		float64(stn.min)/10.0,
+		stn.avg(),
+		float64(stn.max)/10.0,
+	)
 }
